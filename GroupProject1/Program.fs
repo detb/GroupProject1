@@ -19,34 +19,37 @@ type Product = {
 }
 
 //Price calcs.
+let gtgVAT x n = 
+    x * (1.0 + (n / 100.0))
+
 let calcProductPrice (prod:Product) =
     match prod.Type, prod.ProdSize with
-    | Drink Milk, Small -> 15
-    | Drink Milk, Medium -> 20
-    | Drink Milk, Large -> 25
-    | Drink Tea, Small -> 5
-    | Drink Tea, Medium -> 10
-    | Drink Tea, Large -> 15
-    | Drink Coffee, Small -> 20
-    | Drink Coffee, Medium -> 25
-    | Drink Coffee, Large -> 30
-    | Food Meatballs, Small -> 30
-    | Food Meatballs, Medium -> 45
-    | Food Meatballs, Large -> 50
-    | Food Pizza, Small -> 30
-    | Food Pizza, Medium -> 45
-    | Food Pizza, Large -> 50
-    | Food TBoneSteak, Small -> 30
-    | Food TBoneSteak, Medium -> 45
-    | Food TBoneSteak, Large -> 50
-    | Fruit Banana, _ -> 15
-    | Fruit Strawberry, _ -> 20
-    | Fruit Watermelon, _ -> 25
+    | Drink Milk, Small -> 15.0
+    | Drink Milk, Medium -> 20.0
+    | Drink Milk, Large -> 25.0
+    | Drink Tea, Small -> 5.0
+    | Drink Tea, Medium -> 10.0
+    | Drink Tea, Large -> 15.0
+    | Drink Coffee, Small -> gtgVAT 20.0 25
+    | Drink Coffee, Medium -> gtgVAT 25.0 25
+    | Drink Coffee, Large -> gtgVAT 30.0 25
+    | Food Meatballs, Small -> 30.0
+    | Food Meatballs, Medium -> 45.0
+    | Food Meatballs, Large -> 50.0
+    | Food Pizza, Small -> 30.0
+    | Food Pizza, Medium -> 45.0
+    | Food Pizza, Large -> 50.0
+    | Food TBoneSteak, Small -> 30.0
+    | Food TBoneSteak, Medium -> 45.0
+    | Food TBoneSteak, Large -> 50.0
+    | Fruit Banana, _ -> 15.0
+    | Fruit Strawberry, _ -> 20.0
+    | Fruit Watermelon, _ -> 25.0
 
 //Orders
 type OrderSpec = {
     ProdList: List<Product>
-    mutable price: int
+    mutable price: float
     PaymentMethods: List<Payment>
 }
 
@@ -88,7 +91,7 @@ let pay100Cash = {Type = Cash; Weight = 1}
 
 //Orders
 let firstOrder = {ProdList = [prodTest; prodTest2]; price = 0; PaymentMethods = [pay50Mobile; pay50Cash]}
-let secondOrder = {ProdList = [productBanana; prodTest2]; price = 0; PaymentMethods = [pay100Cash]}
+let secondOrder = {ProdList = [productPizza; prodTest2]; price = 0; PaymentMethods = [pay100Cash]}
 
 //Customers
 let cust1:Customer = { First = "Mat"; Last = "leth"; School = VIA; Orders = List.Empty; StudyNumber = 15 }
@@ -103,3 +106,15 @@ addToList teacher1 secondOrder
 //out prints (Ved ikke hvordan jeg printer "Type: StudyHouse"
 printf "TEST CUST1 ----> Customer 1 = First: %s Last: %s Orders: %A Study House: %A StudyNr: %i" cust1.First cust1.Last cust1.Orders cust1.School cust1.StudyNumber 
 printf "TEST Teacher order ----> Teacher 1 = First: %s Last: %s Orders: %A Study House: %A StudyNr: %i" teacher1.First teacher1.Last teacher1.Orders teacher1.School teacher1.StudyNumber 
+
+    
+let gtgAgent = 
+    MailboxProcessor.Start(fun inbox ->
+        let rec processGTG = async {
+            let! order = inbox.Receive()
+            orderCalc order
+            printfn "Please pay DKK %A for your order. Thanks!" order.price
+            return! processGTG
+        }
+        processGTG)
+       
